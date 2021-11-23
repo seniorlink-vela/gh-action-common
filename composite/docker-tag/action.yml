@@ -1,0 +1,52 @@
+name: Tag ECR Image
+description: adds github repo tag to matching ECR image
+
+inputs:
+  aws-region:
+    description: aws region
+    required: false
+    default: us-east-1
+
+  aws-access-key-id:
+    description: aws access key - use a github secret
+    required: true
+
+  aws-secret-access-key:
+    description: aws access key secret - use a github secret
+    required: true
+
+  ecr-repository:
+    description: ECR repository name (including any prefix)
+    required: true
+
+runs:
+  using: composite
+  steps:
+
+    - name: Get tag name
+      id: tag-name
+      shell: bash
+      run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+
+    - name: Calculate short SHA
+      uses: benjlevesque/short-sha@v1.2
+      id: short-sha
+      with:
+        length: 7
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id}}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Add tag to ECR image
+      shell: bash
+      run: |
+        MANIFEST=$(aws ecr batch-get-image --repository-name ${{ inputs.ecr-repository }} --image-ids imageTag=${{ steps.short-sha.outputs.sha }} --query 'images[].imageManifest' --output text)
+        aws ecr put-image --repository-name ${{ inputs.ecr-repository }} --image-tag ${{ steps.tag-name.outputs.tag }} --image-manifest "$MANIFEST"
+
