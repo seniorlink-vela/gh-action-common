@@ -1,0 +1,116 @@
+name: Docker Build / Push to ECR
+description: builds image and conditionally pushes to ECR with a short git-commit tag
+
+inputs:
+  push-to-ecr:
+    description: whether to push the built image to ECR
+    required: true
+
+  aws-region:
+    description: aws region
+    required: false
+    default: us-east-1
+
+  aws-access-key-id:
+    description: aws access key - use a github secret
+    required: true
+
+  aws-secret-access-key:
+    description: aws access key secret - use a github secret
+    required: true
+
+  build-secrets:
+    description: string formatted list of buildkit secrets to use in the build - use github secrets
+    required: false
+    default: ""
+
+  dockerfile-target:
+    description: stage to target in a multi-stage build; if not defined used the default target
+    required: false
+    default: ""
+
+  dockerfile-context-path:
+    description: filepath context for dockerfile if not 'current dir'
+    required: false
+    default: "."
+
+  ecr-repository:
+    description: ECR repository name (including any prefix)
+    required: true
+
+  additional-tags:
+    description: extra tags to add to the image, as a string list
+    required: false
+    default: ""
+
+  layer-cache-path:
+    description: path for image layer cache; do not change this value. Used to reduce repitition
+    required: false
+    default: /tmp/.buildx-cache
+runs:
+  using: composite
+  steps:
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+      with:
+        # allows the build to communicate with GH services as localhost
+        driver-opts: |
+          network=host
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        # for future OIDC authentication
+        #role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-${{ github.event.repository.name }}
+        aws-region: ${{ inputs.aws-region }}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Calculate short SHA
+      uses: benjlevesque/short-sha@v1.2
+      id: short-sha
+      with:
+        length: 7
+
+    - name: Use cached Docker layers
+      uses: actions/cache@v2
+      with:
+        path: ${{ inputs.layer-cache-path }}
+        key: ${{ runner.os }}-single-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-single-buildx
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2.7.0
+      env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      with:
+        context: ${{ inputs.dockerfile-context-path }}
+        secrets: |
+          ${{ inputs.build-secrets }}
+        target: ${{ inputs.dockerfile-target }}
+        # allows the build to communicate with GH services as localhost
+        network: host
+        push: ${{ inputs.push-to-ecr }}
+        tags: |
+          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}
+          ${{ inputs.extra-tags }}
+        # layer cache settings
+        cache-from: type=local,src=${{ inputs.layer-cache-path }}
+        cache-to: type=local,dest=${{ inputs.layer-cache-path }}-new,mode=max
+
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      shell: bash
+      run: |
+        rm -rf ${{ inputs.layer-cache-path }}
+        if [[ -d ${{ inputs.layer-cache-path }}-new  ]]; then
+          mv ${{ inputs.layer-cache-path }}-new ${{ inputs.layer-cache-path }}
+        fi
