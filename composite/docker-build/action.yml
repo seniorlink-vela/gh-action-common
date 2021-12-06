@@ -47,6 +47,11 @@ inputs:
     description: path for image layer cache; do not change this value. Used to reduce repitition
     required: false
     default: /tmp/.buildx-cache
+
+outputs:
+  ecr-registry:
+    description: 'Amazon ECR registry name'
+
 runs:
   using: composite
   steps:
@@ -70,6 +75,10 @@ runs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Output ECR Registry name
+      run: echo "::set-output name=ecr-registry::${{ steps.login-ecr.outputs.registry }}"
+      id: output-ecr-registry
 
     - name: Calculate short SHA
       uses: benjlevesque/short-sha@v1.2
