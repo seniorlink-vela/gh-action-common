@@ -47,11 +47,6 @@ inputs:
     description: path for image layer cache; do not change this value. Used to reduce repitition
     required: false
     default: /tmp/.buildx-cache
-
-outputs:
-  ecr-registry:
-    description: 'Amazon ECR registry name'
-
 runs:
   using: composite
   steps:
@@ -76,10 +71,6 @@ runs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Output ECR Registry name
-      run: echo "::set-output name=ecr-registry::${{ steps.login-ecr.outputs.registry }}"
-      id: output-ecr-registry
-
     - name: Calculate short SHA
       uses: benjlevesque/short-sha@v1.2
       id: short-sha
@@ -93,6 +84,15 @@ runs:
         key: ${{ runner.os }}-single-buildx-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-single-buildx
+
+    - name: Prepend tags with registry and repository
+      id: prepend-tags
+      uses: frabert/replace-string-action@v2.0
+      with:
+        pattern: '([^\s]+)'
+        string: ${{ inputs.extra-tags }}
+        flags: g
+        replace-with: "${{ steps.test-login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v2.7.0
@@ -108,7 +108,7 @@ runs:
         push: ${{ inputs.push-to-ecr }}
         tags: |
           ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}
-          ${{ inputs.extra-tags }}
+          ${{ steps.prepend-tags.outputs.replaced }}
         # layer cache settings
         cache-from: type=local,src=${{ inputs.layer-cache-path }}
         cache-to: type=local,dest=${{ inputs.layer-cache-path }}-new,mode=max
