@@ -85,6 +85,15 @@ runs:
         restore-keys: |
           ${{ runner.os }}-single-buildx
 
+    - name: Prepend tags with registry and repository
+      id: prepend-tags
+      uses: frabert/replace-string-action@v2.0
+      with:
+        pattern: '([^\s]+)'
+        string: ${{ inputs.extra-tags }}
+        flags: g
+        replace-with: "${{ steps.test-login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v2.7.0
       env:
@@ -99,7 +108,7 @@ runs:
         push: ${{ inputs.push-to-ecr }}
         tags: |
           ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}
-          ${{ inputs.extra-tags }}
+          ${{ steps.prepend-tags.outputs.replaced }}
         # layer cache settings
         cache-from: type=local,src=${{ inputs.layer-cache-path }}
         cache-to: type=local,dest=${{ inputs.layer-cache-path }}-new,mode=max
