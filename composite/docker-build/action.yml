@@ -94,6 +94,12 @@ runs:
         flags: g
         replace-with: "${{ steps.test-login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
 
+    - name: Get current time
+      id: time
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v2.7.0
       env:
@@ -108,6 +114,8 @@ runs:
         push: ${{ inputs.push-to-ecr }}
         tags: |
           ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}
+          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}
+          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}
           ${{ steps.prepend-tags.outputs.replaced }}
         # layer cache settings
         cache-from: type=local,src=${{ inputs.layer-cache-path }}
