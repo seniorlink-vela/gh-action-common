@@ -66,6 +66,6 @@ runs:
       run: |
         git checkout -b kustomize-test-branch
         echo '--------------------------'
-        git commit -am 'automation: kustomize set image for '
+        git commit -am 'automation: kustomize set image for ${{ image }}'
         echo '--------------------------'
         git push --set-upstream origin HEAD
