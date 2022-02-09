@@ -47,6 +47,15 @@ inputs:
     description: path for image layer cache; do not change this value. Used to reduce repitition
     required: false
     default: /tmp/.buildx-cache
+
+outputs:
+  image-name-short: ${{ steps.generate-tags.outputs.image-name-short }}
+
+  image-name-medium: ${{ steps.generate-tags.outputs.image-name-medium }}
+  
+  image-name-long: ${{ steps.generate-tags.outputs.image-name-long }}
+
+
 runs:
   using: composite
   steps:
@@ -100,7 +109,19 @@ runs:
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
+    - name: Generate Tags
+      id: generate-tags
+      shell: bash
+      run: |
+          IMAGE_NAME_SHORT="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}"
+          IMAGE_NAME_MEDIUM="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}"
+          IMAGE_NAME_LONG="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}"
+          echo "::set-output name=image-name-short::$IMAGE_NAME_SHORT"
+          echo "::set-output name=image-name-short::$IMAGE_NAME_MEDIUM"
+          echo "::set-output name=image-name-short::$IMAGE_NAME_LONG"
+
     - name: Build and push Docker image
+      id: build-push
       uses: docker/build-push-action@v2.7.0
       env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -113,9 +134,9 @@ runs:
         network: host
         push: ${{ inputs.push-to-ecr }}
         tags: |
-          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}
-          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}
-          ${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}
+          ${{ steps.generate-tags.outputs.image-name-short }}
+          ${{ steps.generate-tags.outputs.image-name-medium }}
+          ${{ steps.generate-tags.outputs.image-name-long }}
           ${{ steps.prepend-tags.outputs.replaced }}
         # layer cache settings
         cache-from: type=local,src=${{ inputs.layer-cache-path }}
