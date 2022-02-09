@@ -5,16 +5,6 @@ inputs:
   github-token:
     description: Github token with permissions to push commits to the given manifests-repository
     required: true
-  
-  github-user-name:
-    description: Github user name to associate with automated commits from this workflow
-    required: false
-    default: kustomize-github-workflow
-
-  github-user-email:
-    description: Github user email to associate with automated commits from this workflow
-    required: false
-    default: build.vela.care
 
   manifests-repository:
     description: Github repository containing deployment manifests to kustomize
@@ -57,8 +47,8 @@ runs:
       id: set-git-identity
       shell: bash
       run: |
-        git config --global user.email "${{ github-user-email }}"
-        git config --global user.name "${{ github-user-name }}"
+        git config --global user.email "build@vela.care"
+        git config --global user.name "kustomize-github-workflow"
 
     - name: Push to SCM repository
       id: push-to-scm
