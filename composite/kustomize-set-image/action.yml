@@ -18,6 +18,10 @@ inputs:
     description: Relative path to the directory containing the desired kustomization file to modify within the manifests-repository
     required: true
   
+  project:
+    description: The project name to display in the git commit
+    required: true
+
   image:
     description: The fully-qualified image name to pin via kustomize
     required: true
@@ -56,6 +60,6 @@ runs:
       run: |
         git checkout -b kustomize-test-branch
         echo '--------------------------'
-        git commit -am 'automation: kustomize set image for ${{ inputs.image }}'
+        git commit -am "automation: kustomize set image for ${{ inputs.project }}" -m "${{ inputs.project }} project set to image ${{ inputs.image }}"
         echo '--------------------------'
         git push --set-upstream origin HEAD
