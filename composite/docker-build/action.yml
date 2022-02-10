@@ -49,11 +49,17 @@ inputs:
     default: /tmp/.buildx-cache
 
 outputs:
-  image-name-short: ${{ steps.generate-tags.outputs.image-name-short }}
+  image-name-short:
+    description: "short-detail image name in the form: <registry>/<repository>:<commit-sha>"
+    value: ${{ steps.generate-tags.outputs.image-name-short }}
 
-  image-name-medium: ${{ steps.generate-tags.outputs.image-name-medium }}
+  image-name-medium:
+    description: "medium-detail image name in the form: <registry>/<repository>:<commit-sha>-<run-number>"
+    value: ${{ steps.generate-tags.outputs.image-name-medium }}
   
-  image-name-long: ${{ steps.generate-tags.outputs.image-name-long }}
+  image-name-long:
+    description: "long-detail image name in the form: <registry>/<repository>:<commit-sha>-<run-number>-<timestamp>"
+    value: ${{ steps.generate-tags.outputs.image-name-long }}
 
 
 runs:
@@ -101,7 +107,7 @@ runs:
         pattern: '([^\s]+)'
         string: ${{ inputs.extra-tags }}
         flags: g
-        replace-with: "${{ steps.test-login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
+        replace-with: "${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
 
     - name: Get current time
       id: time
@@ -113,9 +119,9 @@ runs:
       id: generate-tags
       shell: bash
       run: |
-          IMAGE_NAME_SHORT="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}"
-          IMAGE_NAME_MEDIUM="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}"
-          IMAGE_NAME_LONG="${{ env.ECR_REGISTRY }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}"
+          IMAGE_NAME_SHORT="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}"
+          IMAGE_NAME_MEDIUM="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}"
+          IMAGE_NAME_LONG="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}"
           echo "::set-output name=image-name-short::$IMAGE_NAME_SHORT"
           echo "::set-output name=image-name-short::$IMAGE_NAME_MEDIUM"
           echo "::set-output name=image-name-short::$IMAGE_NAME_LONG"

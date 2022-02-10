@@ -11,7 +11,7 @@ inputs:
     required: true
 
   manifests-ref:
-    description: Github reference to a commit or branch where kustomize will push changes
+    description: Github reference to a commit or branch where kustomize will push changes.  If this ref is a branch, it must exist as it will not be created.
     required: true
     
   manifests-path:
@@ -58,8 +58,8 @@ runs:
       id: push-to-scm
       shell: bash
       run: |
-        git checkout -b kustomize-test-branch
+        git checkout ${{ inputs.manifests-ref }}
         echo '--------------------------'
         git commit -am "automation: kustomize set image for ${{ inputs.project }}" -m "${{ inputs.project }} project set to image ${{ inputs.image }}"
         echo '--------------------------'
-        git push --set-upstream origin HEAD
+        git push
