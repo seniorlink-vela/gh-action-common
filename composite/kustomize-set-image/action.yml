@@ -1,0 +1,61 @@
+name: Kustomize Set Image Tag
+description: Patches a new image tag into a kubernetes project via 'kustomize edit image'
+
+inputs:
+  github-token:
+    description: Github token with permissions to push commits to the given manifests-repository
+    required: true
+
+  manifests-repository:
+    description: Github repository containing deployment manifests to kustomize
+    required: true
+
+  manifests-ref:
+    description: Github reference to a commit or branch where kustomize will push changes
+    required: true
+    
+  manifests-path:
+    description: Relative path to the directory containing the desired kustomization file to modify within the manifests-repository
+    required: true
+  
+  image:
+    description: The fully-qualified image name to pin via kustomize
+    required: true
+    
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ manifests-repository }}
+        ref: ${{ manifests-ref }}
+        token: ${{ github-token }}
+
+    - name: Setup Kustomize
+      id: setup-kustomize
+      uses: imranismail/setup-kustomize@v1
+
+    - name: Kustomize Image Tag
+      id: kustomize-image-tag
+      shell: bash
+      run: |
+        cd ${{ manifests-path }}
+        kustomize edit set image ${{ image }}
+    
+    - name: Set Git user and email
+      id: set-git-identity
+      shell: bash
+      run: |
+        git config --global user.email "build@vela.care"
+        git config --global user.name "kustomize-github-workflow"
+
+    - name: Push to SCM repository
+      id: push-to-scm
+      shell: bash
+      run: |
+        git checkout -b kustomize-test-branch
+        echo '--------------------------'
+        git commit -am 'automation: kustomize set image for ${{ image }}'
+        echo '--------------------------'
+        git push --set-upstream origin HEAD
