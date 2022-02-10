@@ -50,15 +50,15 @@ inputs:
 
 outputs:
   image-name-short:
-    description: "long image name in the form: <registry>/<repository>:<commit-sha>"
+    description: "short-detail image name in the form: <registry>/<repository>:<commit-sha>"
     value: ${{ steps.generate-tags.outputs.image-name-short }}
 
   image-name-medium:
-    description: "long image name in the form: <registry>/<repository>:<commit-sha>-<run-number>"
+    description: "medium-detail image name in the form: <registry>/<repository>:<commit-sha>-<run-number>"
     value: ${{ steps.generate-tags.outputs.image-name-medium }}
   
   image-name-long:
-    description: "long image name in the form: <registry>/<repository>:<commit-sha>-<run-number>-<timestamp>"
+    description: "long-detail image name in the form: <registry>/<repository>:<commit-sha>-<run-number>-<timestamp>"
     value: ${{ steps.generate-tags.outputs.image-name-long }}
 
 
