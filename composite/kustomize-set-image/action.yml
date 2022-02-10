@@ -28,9 +28,9 @@ runs:
     - name: Checkout
       uses: actions/checkout@v2
       with:
-        repository: ${{ manifests-repository }}
-        ref: ${{ manifests-ref }}
-        token: ${{ github-token }}
+        repository: ${{ inputs.manifests-repository }}
+        ref: ${{ inputs.manifests-ref }}
+        token: ${{ inputs.github-token }}
 
     - name: Setup Kustomize
       id: setup-kustomize
@@ -40,8 +40,8 @@ runs:
       id: kustomize-image-tag
       shell: bash
       run: |
-        cd ${{ manifests-path }}
-        kustomize edit set image ${{ image }}
+        cd ${{ inputs.manifests-path }}
+        kustomize edit set image ${{ inputs.image }}
     
     - name: Set Git user and email
       id: set-git-identity
@@ -56,6 +56,6 @@ runs:
       run: |
         git checkout -b kustomize-test-branch
         echo '--------------------------'
-        git commit -am 'automation: kustomize set image for ${{ image }}'
+        git commit -am 'automation: kustomize set image for ${{ inputs.image }}'
         echo '--------------------------'
         git push --set-upstream origin HEAD
