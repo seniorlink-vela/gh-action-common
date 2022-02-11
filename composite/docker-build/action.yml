@@ -123,8 +123,8 @@ runs:
           IMAGE_NAME_MEDIUM="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}"
           IMAGE_NAME_LONG="${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:${{ steps.short-sha.outputs.sha }}-${{ github.run_number }}-${{ steps.time.outputs.time }}"
           echo "::set-output name=image-name-short::$IMAGE_NAME_SHORT"
-          echo "::set-output name=image-name-short::$IMAGE_NAME_MEDIUM"
-          echo "::set-output name=image-name-short::$IMAGE_NAME_LONG"
+          echo "::set-output name=image-name-medium::$IMAGE_NAME_MEDIUM"
+          echo "::set-output name=image-name-long::$IMAGE_NAME_LONG"
 
     - name: Build and push Docker image
       id: build-push
