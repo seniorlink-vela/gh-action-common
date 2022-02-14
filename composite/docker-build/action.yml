@@ -105,7 +105,7 @@ runs:
       uses: frabert/replace-string-action@v2.0
       with:
         pattern: '([^\s]+)'
-        string: ${{ inputs.extra-tags }}
+        string: ${{ inputs.additional-tags }}
         flags: g
         replace-with: "${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}:$1"
 
