@@ -17,10 +17,6 @@ inputs:
   manifests-path:
     description: Relative path to the directory containing the desired kustomization file to modify within the manifests-repository
     required: true
-  
-  project:
-    description: The project name to display in the git commit
-    required: true
 
   image:
     description: The fully-qualified image name to pin via kustomize
