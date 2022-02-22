@@ -54,12 +54,28 @@ runs:
         git config --global user.email "build@vela.care"
         git config --global user.name "kustomize-github-workflow"
 
+    # Decompose the image metadata from the image name input.
+    # There is no validation on these parameters; output values may be null!
+    - name: Get image metadata
+      id: image-metadata
+      shell: bash
+      run: |
+        IMAGE_REGISTRY=$(echo ${{ inputs.image }}   | sed -E 's/^([0-9]{12}\.dkr\.ecr.([^.]+)\.amazonaws\.com)\/([^:]+):(.*)$/\1/')
+        IMAGE_REGION=$(echo ${{ inputs.image }}     | sed -E 's/^([0-9]{12}\.dkr\.ecr.([^.]+)\.amazonaws\.com)\/([^:]+):(.*)$/\2/')
+        IMAGE_REPOSITORY=$(echo ${{ inputs.image }} | sed -E 's/^([0-9]{12}\.dkr\.ecr.([^.]+)\.amazonaws\.com)\/([^:]+):(.*)$/\3/')
+        IMAGE_TAG=$(echo ${{ inputs.image }}        | sed -E 's/^([0-9]{12}\.dkr\.ecr.([^.]+)\.amazonaws\.com)\/([^:]+):(.*)$/\4/')
+        echo "::set-output name=image-registry::$IMAGE_REGISTRY"
+        echo "::set-output name=image-region::$IMAGE_REGION"
+        echo "::set-output name=image-repository::$IMAGE_REPOSITORY"
+        echo "::set-output name=image-tag::$IMAGE_TAG"
+
     - name: Push to SCM repository
       id: push-to-scm
       shell: bash
       run: |
         git checkout ${{ inputs.manifests-ref }}
         echo '--------------------------'
-        git commit -am "automation: kustomize set image for ${{ inputs.project }}" -m "${{ inputs.project }} project set to image ${{ inputs.image }}"
+        git commit -am "automation: kustomize set image for ${{ steps.image-metadata.outputs.image-repository }}" \
+          -m "${{ steps.image-metadata.outputs.image-repository }} project set to image ${{ steps.image-metadata.outputs.image-tag }}"
         echo '--------------------------'
         git push
