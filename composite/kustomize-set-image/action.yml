@@ -32,23 +32,16 @@ runs:
         ref: ${{ inputs.manifests-ref }}
         token: ${{ inputs.github-token }}
 
-    - name: Setup Kustomize
-      id: setup-kustomize
-      uses: imranismail/setup-kustomize@v1
-
-    - name: Kustomize Image Tag
-      id: kustomize-image-tag
-      shell: bash
-      run: |
-        cd ${{ inputs.manifests-path }}
-        kustomize edit set image ${{ inputs.image }}
-    
     - name: Set Git user and email
       id: set-git-identity
       shell: bash
       run: |
         git config --global user.email "build@vela.care"
         git config --global user.name "kustomize-github-workflow"
+
+    - name: Setup Kustomize
+      id: setup-kustomize
+      uses: imranismail/setup-kustomize@v1
 
     # Decompose the image metadata from the image name input.
     # There is no validation on these parameters; output values may be null!
@@ -65,12 +58,24 @@ runs:
         echo "::set-output name=image-repository::$IMAGE_REPOSITORY"
         echo "::set-output name=image-tag::$IMAGE_TAG"
 
+    - name: Checkout Github Ref
+      id: checkout-ref
+      shell: bash
+      run: |
+        git checkout ${{ inputs.manifests-ref }}
+        git pull
+
+    - name: Kustomize Image Tag
+      id: kustomize-image-tag
+      shell: bash
+      run: |
+        cd ${{ inputs.manifests-path }}
+        kustomize edit set image ${{ inputs.image }}
+
     - name: Push to SCM repository
       id: push-to-scm
       shell: bash
       run: |
-        git checkout ${{ inputs.manifests-ref }}
-        echo '--------------------------'
         git commit -am "automation: kustomize set image for ${{ steps.image-metadata.outputs.image-repository }}" \
           -m "${{ steps.image-metadata.outputs.image-repository }} project set to image ${{ steps.image-metadata.outputs.image-tag }}"
         echo '--------------------------'
