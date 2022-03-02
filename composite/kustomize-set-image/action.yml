@@ -58,24 +58,15 @@ runs:
         echo "::set-output name=image-repository::$IMAGE_REPOSITORY"
         echo "::set-output name=image-tag::$IMAGE_TAG"
 
-    - name: Checkout Github Ref
-      id: checkout-ref
-      shell: bash
-      run: |
-        git checkout ${{ inputs.manifests-ref }}
-        git pull
-
     - name: Kustomize Image Tag
       id: kustomize-image-tag
       shell: bash
       run: |
+        git pull
         cd ${{ inputs.manifests-path }}
+        echo '--------------------------'
         kustomize edit set image ${{ inputs.image }}
-
-    - name: Push to SCM repository
-      id: push-to-scm
-      shell: bash
-      run: |
+        echo '--------------------------'
         git commit -am "automation: kustomize set image for ${{ steps.image-metadata.outputs.image-repository }}" \
           -m "${{ steps.image-metadata.outputs.image-repository }} project set to image ${{ steps.image-metadata.outputs.image-tag }}"
         echo '--------------------------'
