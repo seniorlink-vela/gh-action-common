@@ -130,6 +130,8 @@ runs:
       id: docker-meta
       uses: docker/metadata-action@v3
       with:
+        # Base image name for tags (required)
+        images: name/app
         # generate Docker tags based on the following events/attributes
         tags: |
           type=ref,event=branch
