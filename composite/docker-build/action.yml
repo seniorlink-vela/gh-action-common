@@ -131,7 +131,7 @@ runs:
       uses: docker/metadata-action@v3
       with:
         # Base image name for tags (required)
-        images: name/app
+        images: ${{ inputs.ecr-repository }}
         # generate Docker tags based on the following events/attributes
         tags: |
           type=ref,event=branch
