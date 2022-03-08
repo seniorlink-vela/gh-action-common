@@ -19,7 +19,7 @@ inputs:
     description: aws access key secret - use a github secret
     required: true
 
-  build-secrets:
+  github-token:
     description: string formatted list of buildkit secrets to use in the build - use github secrets
     required: false
     default: ""
@@ -140,6 +140,7 @@ runs:
           type=semver,pattern={{major}}.{{minor}}
           type=semver,pattern={{major}}
           type=sha,prefix=
+        github-token: ${{ inputs.github-token }}
 
     - name: Build and push Docker image
       id: build-push
@@ -149,7 +150,7 @@ runs:
       with:
         context: ${{ inputs.dockerfile-context-path }}
         secrets: |
-          ${{ inputs.build-secrets }}
+          github_token=${{ inputs.github-token }}
         target: ${{ inputs.dockerfile-target }}
         # allows the build to communicate with GH services as localhost
         network: host
