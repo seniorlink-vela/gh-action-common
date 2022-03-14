@@ -136,8 +136,8 @@ runs:
         tags: |
           type=semver,pattern=v{{version}}
           type=sha,prefix=
-          type=sha,prefix=,suffix="-${{ github.run_number }}"
-          type=sha,prefix=,suffix="-${{ github.run_number }}-${{ steps.time.outputs.time }}"
+          type=sha,prefix=,suffix=-${{ github.run_number }}
+          type=sha,prefix=,suffix=-${{ github.run_number }}-${{ steps.time.outputs.time }}
         labels: |
           org.opencontainers.image.revision=${{ steps.short-sha.outputs.sha }}
           org.opencontainers.image.commit_msg=${{ github.event.head_commit.message }}
