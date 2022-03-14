@@ -47,11 +47,6 @@ inputs:
     description: path for image layer cache; do not change this value. Used to reduce repitition
     required: false
     default: /tmp/.buildx-cache
-  
-  comment:
-    description: Commit message to add to image metadata under OCI label 
-    required: false
-    default: ""
 
 outputs:
   image-name-short:
@@ -139,14 +134,13 @@ runs:
         images: "${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}"
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=ref,event=branch
-          type=ref,event=pr
           type=semver,pattern=v{{version}}
           type=sha,prefix=
+          type=sha,prefix=,suffix="-${{ github.run_number }}"
+          type=sha,prefix=,suffix="-${{ github.run_number }}-${{ steps.time.outputs.time }}"
         labels: |
           org.opencontainers.image.revision=${{ steps.short-sha.outputs.sha }}
-          org.opencontainers.image.commit_comment1=${{ inputs.comment }}
-          org.opencontainers.image.commit_comment2=${{ github.event.head_commit.message }}
+          org.opencontainers.image.commit_msg=${{ github.event.head_commit.message }}
         github-token: ${{ inputs.github-token }}
 
     - name: Build and push Docker image
@@ -180,8 +174,3 @@ runs:
         if [[ -d ${{ inputs.layer-cache-path }}-new  ]]; then
           mv ${{ inputs.layer-cache-path }}-new ${{ inputs.layer-cache-path }}
         fi
-
-# ${{ steps.generate-tags.outputs.image-name-short }}
-#           ${{ steps.generate-tags.outputs.image-name-medium }}
-#           ${{ steps.generate-tags.outputs.image-name-long }}
-#           ${{ steps.prepend-tags.outputs.replaced }}
