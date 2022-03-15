@@ -19,8 +19,8 @@ inputs:
     description: aws access key secret - use a github secret
     required: true
 
-  github-token:
-    description: github token used to access 
+  build-secrets:
+    description: string formatted list of buildkit secrets to use in the build - use github secrets
     required: false
     default: ""
 
@@ -139,7 +139,6 @@ runs:
           type=semver,pattern={{version}}
         labels: |
           org.opencontainers.image.revision=apple${{ steps.short-sha.outputs.sha }}
-        # github-token: ${{ inputs.github-token }}
 
     - name: Build and push Docker image
       id: build-push
@@ -149,7 +148,7 @@ runs:
       with:
         context: ${{ inputs.dockerfile-context-path }}
         secrets: |
-          github_token=${{ inputs.github-token }}
+          ${{ inputs.build-secrets }}
         target: ${{ inputs.dockerfile-target }}
         # allows the build to communicate with GH services as localhost
         network: host
