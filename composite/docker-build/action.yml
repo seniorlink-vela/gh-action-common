@@ -138,7 +138,7 @@ runs:
           type=ref,event=pr
           type=semver,pattern={{version}}
         labels: |
-          org.opencontainers.image.revision=${{ steps.short-sha.outputs.sha }}
+          org.opencontainers.image.revision=apple${{ steps.short-sha.outputs.sha }}
         # github-token: ${{ inputs.github-token }}
 
     - name: Build and push Docker image
