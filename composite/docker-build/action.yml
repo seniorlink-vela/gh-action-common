@@ -141,8 +141,7 @@ runs:
           type=sha,prefix=,suffix=-${{ github.run_number }}
           type=sha,prefix=,suffix=-${{ github.run_number }}-${{ steps.time.outputs.time }}
         labels: |
-          org.opencontainers.image.revision="${{ steps.short-sha.outputs.sha }}"
-          org.opencontainers.image.commit_msg="${{ github.event.head_commit.message }}"
+          org.opencontainers.image.revision=${{ steps.short-sha.outputs.sha }}
         github-token: ${{ inputs.github-token }}
 
     - name: Build and push Docker image
