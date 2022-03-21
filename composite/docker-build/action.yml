@@ -126,6 +126,20 @@ runs:
           echo "::set-output name=image-name-medium::$IMAGE_NAME_MEDIUM"
           echo "::set-output name=image-name-long::$IMAGE_NAME_LONG"
 
+    - name: Docker meta
+      id: docker-meta
+      uses: docker/metadata-action@v3
+      with:
+        # Base image name for tags (required)
+        images: "${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr-repository }}"
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+        labels: |
+          org.opencontainers.image.revision=${{ steps.short-sha.outputs.sha }}
+
     - name: Build and push Docker image
       id: build-push
       uses: docker/build-push-action@v2.7.0
@@ -144,6 +158,9 @@ runs:
           ${{ steps.generate-tags.outputs.image-name-medium }}
           ${{ steps.generate-tags.outputs.image-name-long }}
           ${{ steps.prepend-tags.outputs.replaced }}
+          ${{ steps.docker-meta.outputs.tags }}
+        labels: |
+          ${{ steps.docker-meta.outputs.labels }}
         # layer cache settings
         cache-from: type=local,src=${{ inputs.layer-cache-path }}
         cache-to: type=local,dest=${{ inputs.layer-cache-path }}-new,mode=max
